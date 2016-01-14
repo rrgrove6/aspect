@@ -597,7 +597,7 @@ namespace aspect
       void
       local_assemble_advection_system (const AdvectionField &advection_field,
                                        const std::pair<double,double> global_field_range,
-                                       Vector<double> &viscosity_per_cell,
+                                       const Vector<double>           &viscosity_per_cell,
                                        const double                   global_max_velocity,
                                        const double                   global_entropy_variation,
                                        const typename DoFHandler<dim>::active_cell_iterator &cell,
@@ -650,8 +650,7 @@ namespace aspect
        */
       template <typename T>
       void get_artificial_viscosity (Vector<T> &viscosity_per_cell,
-                                     const AdvectionField &advection_field,
-                                     const bool use_smoothing = false) const;
+                                     const AdvectionField &advection_field) const;
 
       /**
        * Compute the seismic shear wave speed, Vs anomaly per element. we

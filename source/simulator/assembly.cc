@@ -754,13 +754,14 @@ namespace aspect
   void
   Simulator<dim>::
   get_artificial_viscosity (Vector<T> &viscosity_per_cell,
-                            const AdvectionField &advection_field,
-                            const bool use_smoothing /* = false */) const
+                            const AdvectionField &advection_field) const
   {
     Assert(viscosity_per_cell.size()==triangulation.n_active_cells(), ExcInternalError());
 
     if (advection_field.field_type == AdvectionField::compositional_field)
       Assert(parameters.n_compositional_fields > advection_field.compositional_variable, ExcInternalError());
+
+    viscosity_per_cell = 0.0;
 
     const std::pair<double,double>
     global_field_range = get_extrapolated_advection_field_range (advection_field);
@@ -786,12 +787,13 @@ namespace aspect
     typename DoFHandler<dim>::active_cell_iterator cell = dof_handler.begin_active();
     for (unsigned int cellidx=0; cellidx<triangulation.n_active_cells(); ++cellidx, ++cell)
       {
-        if (cell->is_artificial())
+    	if (!cell->is_locally_owned()
+    			|| (parameters.use_artificial_viscosity_smoothing  == true  &&  cell->is_artificial()))
           {
             viscosity_per_cell[cellidx]=-1;
             continue;
           }
-        cell->set_user_index(cellidx);
+    	cell->set_user_index(cellidx);
 
         const unsigned int n_q_points    = scratch.finite_element_values.n_quadrature_points;
 
@@ -882,6 +884,8 @@ namespace aspect
                                              true,
                                              scratch.material_model_inputs);
         material_model->evaluate(scratch.material_model_inputs,scratch.material_model_outputs);
+        if(advection_field.is_temperature()==true)
+        {
         MaterialModel::MaterialAveraging::average (parameters.material_averaging,
                                                    cell,
                                                    scratch.finite_element_values.get_quadrature(),
@@ -891,6 +895,7 @@ namespace aspect
         heating_model_manager.evaluate(scratch.material_model_inputs,
                                        scratch.material_model_outputs,
                                        heating_model_outputs);
+        }
 
         for (unsigned int q=0; q<n_q_points; ++q)
           {
@@ -924,7 +929,7 @@ namespace aspect
 
     // if set to true, the maximum of the artificial viscosity in the cell as well
     // as the neighbors of the cell is computed and used instead
-    if (use_smoothing == true)
+    if (parameters.use_artificial_viscosity_smoothing  == true)
       {
         Vector<T> viscosity_per_cell_temp;
         viscosity_per_cell_temp.reinit(triangulation.n_active_cells());
@@ -1475,7 +1480,7 @@ namespace aspect
   void Simulator<dim>::
   local_assemble_advection_system (const AdvectionField     &advection_field,
                                    const std::pair<double,double> global_field_range,
-                                   Vector<double> &viscosity_per_cell,
+                                   const Vector<double>           &viscosity_per_cell,
                                    const double                   global_max_velocity,
                                    const double                   global_entropy_variation,
                                    const typename DoFHandler<dim>::active_cell_iterator &cell,
@@ -1764,7 +1769,7 @@ namespace aspect
 
     Vector<double> viscosity_per_cell;
     viscosity_per_cell.reinit(triangulation.n_active_cells());
-    Simulator<dim>::get_artificial_viscosity(viscosity_per_cell, advection_field, parameters.use_smoothing);
+    get_artificial_viscosity(viscosity_per_cell, advection_field);
 
     WorkStream::
     run (CellFilter (IteratorFilters::LocallyOwnedCell(),
@@ -1776,7 +1781,7 @@ namespace aspect
                           this,
                           advection_field,
                           global_field_range,
-                          viscosity_per_cell,
+                          std_cxx11::cref(viscosity_per_cell),
                           get_maximal_velocity(old_solution),
                           // use the mid-value of the advected field instead of the
                           // integral mean. results are not very
@@ -1852,17 +1857,15 @@ namespace aspect
                                                                      const internal::Assembly::CopyData::StokesSystem<dim> &data); \
   template void Simulator<dim>::assemble_stokes_system (); \
   template void Simulator<dim>::get_artificial_viscosity (Vector<double> &viscosity_per_cell,  \
-                                                          const AdvectionField &advection_field, \
-                                                          const bool use_smoothing /* = false */) const; \
+                                                          const AdvectionField &advection_field) const; \
   template void Simulator<dim>::get_artificial_viscosity (Vector<float> &viscosity_per_cell,  \
-                                                          const AdvectionField &advection_field, \
-                                                          const bool use_smoothing /* = false */) const; \
+                                                          const AdvectionField &advection_field) const; \
   template void Simulator<dim>::build_advection_preconditioner (const AdvectionField &, \
                                                                 std_cxx11::shared_ptr<aspect::LinearAlgebra::PreconditionILU> &preconditioner); \
   template void Simulator<dim>::local_assemble_advection_system ( \
                                                                   const AdvectionField          &advection_field, \
                                                                   const std::pair<double,double> global_field_range, \
-                                                                  Vector<double> &viscosity_per_cell, \
+                                                                  const Vector<double>           &viscosity_per_cell, \
                                                                   const double                   global_max_velocity, \
                                                                   const double                   global_entropy_variation, \
                                                                   const DoFHandler<dim>::active_cell_iterator &cell, \

@@ -19,9 +19,13 @@ set Nonlinear solver scheme                = Advection only
 
 subsection Discretization
   set Temperature polynomial degree = 2
+
+  subsection Stabilization parameters
+    set Use artificial viscosity smoothing = true
+  end
 end
 
-set Use smoothing = true
+
 
 subsection Geometry model
   set Model name = box

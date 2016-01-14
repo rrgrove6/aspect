@@ -127,10 +127,11 @@ namespace aspect
                        "one can choose $c>1$) though a CFL number significantly larger than "
                        "one will yield rather diffusive solutions. Units: None.");
 
-    prm.declare_entry ("Use smoothing", "false",
+    prm.declare_entry ("Use artificial viscosity smoothing", "false",
                        Patterns::Bool (),
-                       "If set to false, the artificial viscosity of a cell is computed and used "
-                       "like normal.  If set to true, the maximum of the artificial viscosity in "
+                       "If set to false, the artificial viscosity of a cell is computed and"
+                       "is computed on every cell separately as discussed in \\cite{KHB12}. "
+                       "If set to true, the maximum of the artificial viscosity in "
                        "the cell as well as the neighbors of the cell is computed and used "
                        "instead.");
 
@@ -709,8 +710,6 @@ namespace aspect
     if (convert_to_years == true)
       maximum_time_step *= year_in_seconds;
 
-    use_smoothing           = prm.get_bool ("Use smoothing");
-
     if (prm.get ("Nonlinear solver scheme") == "IMPES")
       nonlinear_solver = NonlinearSolver::IMPES;
     else if (prm.get ("Nonlinear solver scheme") == "iterated IMPES")
@@ -900,9 +899,10 @@ namespace aspect
 
       prm.enter_subsection ("Stabilization parameters");
       {
-        stabilization_alpha = prm.get_integer ("alpha");
-        stabilization_c_R   = prm.get_double ("cR");
-        stabilization_beta  = prm.get_double ("beta");
+        use_artificial_viscosity_smoothing  = prm.get_bool ("Use artificial viscosity smoothing");
+        stabilization_alpha                 = prm.get_integer ("alpha");
+        stabilization_c_R                   = prm.get_double ("cR");
+        stabilization_beta                  = prm.get_double ("beta");
       }
       prm.leave_subsection ();
 
