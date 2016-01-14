@@ -787,13 +787,13 @@ namespace aspect
     typename DoFHandler<dim>::active_cell_iterator cell = dof_handler.begin_active();
     for (unsigned int cellidx=0; cellidx<triangulation.n_active_cells(); ++cellidx, ++cell)
       {
-    	if (!cell->is_locally_owned()
-    			|| (parameters.use_artificial_viscosity_smoothing  == true  &&  cell->is_artificial()))
+        if (!cell->is_locally_owned()
+            || (parameters.use_artificial_viscosity_smoothing  == true  &&  cell->is_artificial()))
           {
             viscosity_per_cell[cellidx]=-1;
             continue;
           }
-    	cell->set_user_index(cellidx);
+        cell->set_user_index(cellidx);
 
         const unsigned int n_q_points    = scratch.finite_element_values.n_quadrature_points;
 
@@ -884,18 +884,18 @@ namespace aspect
                                              true,
                                              scratch.material_model_inputs);
         material_model->evaluate(scratch.material_model_inputs,scratch.material_model_outputs);
-        if(advection_field.is_temperature()==true)
-        {
-        MaterialModel::MaterialAveraging::average (parameters.material_averaging,
-                                                   cell,
-                                                   scratch.finite_element_values.get_quadrature(),
-                                                   scratch.finite_element_values.get_mapping(),
-                                                   scratch.material_model_outputs);
-        HeatingModel::HeatingModelOutputs heating_model_outputs(n_q_points, parameters.n_compositional_fields);
-        heating_model_manager.evaluate(scratch.material_model_inputs,
-                                       scratch.material_model_outputs,
-                                       heating_model_outputs);
-        }
+        if (advection_field.is_temperature()==true)
+          {
+            MaterialModel::MaterialAveraging::average (parameters.material_averaging,
+                                                       cell,
+                                                       scratch.finite_element_values.get_quadrature(),
+                                                       scratch.finite_element_values.get_mapping(),
+                                                       scratch.material_model_outputs);
+            HeatingModel::HeatingModelOutputs heating_model_outputs(n_q_points, parameters.n_compositional_fields);
+            heating_model_manager.evaluate(scratch.material_model_inputs,
+                                           scratch.material_model_outputs,
+                                           heating_model_outputs);
+          }
 
         for (unsigned int q=0; q<n_q_points; ++q)
           {
