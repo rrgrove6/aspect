@@ -1,0 +1,7 @@
+subsection %%\hyperref[parameters:Discretization]{Discretization}%
+  set %%\hyperref[parameters:Discretization/Temperature polynomial degree]{Temperature polynomial degree}% = 2%% \index[prmindex]{Temperature polynomial degree} \index[prmindexfull]{Discretization!Temperature polynomial degree} %
+
+  subsection %%\hyperref[parameters:Discretization/Stabilization_20parameters]{Stabilization parameters}%
+    set %%\hyperref[parameters:Discretization/Stabilization parameters/Use artificial viscosity smoothing]{Use artificial viscosity smoothing}% = true%% \index[prmindex]{Use artificial viscosity smoothing} \index[prmindexfull]{Discretization!Stabilization parameters!Use artificial viscosity smoothing} %
+  end
+end

@@ -1,0 +1,7 @@
+subsection Discretization
+  set Temperature polynomial degree = 2
+
+  subsection Stabilization parameters
+    set Use artificial viscosity smoothing = true
+  end
+end

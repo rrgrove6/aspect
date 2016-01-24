@@ -4923,6 +4923,40 @@ it is possible to produce many interesting flow fields such as the ones visualiz
     \label{fig:prescribed-velocity}
 \end{figure}
 
+
+\subsubsection{Artificial viscosity smoothing}
+\label{sec:artificial-viscosity-smoothing}
+\textit{This section was contributed by Ryan Grove}
+
+Standard finite element discretizations of advection-diffusion equations introduce unphysical oscillations around steep gradients. Therefore, stabilization must be added to the discrete formulation to obtain correct solutions. In ASPECT, we use the Entropy Viscosity scheme developed by TODO(guermond).  In this scheme, an artificial viscosity is calculated on every cell in and used to try to combat these oscillations that cause unwanted overshoot and undershoot.  More information about how ASPECT does this is located at TODO(step-31).  
+
+Instead of just looking at an individual cell's artificial viscosity, improvements in the minimizing of the oscillations can be made by smoothing.  The motivation behind smoothing came from  the idea of not only using a particular cell's artificial viscosity, but the artificial viscosity of neighboring cells as well.  The smoothing process refers to the comparing artificial viscosity of each cell with the artificial viscosity of each of the cell's neighboring cells and the maximum of this comparison is then used for future calculations.
+
+This feature can be turned on by setting the $Use \text{  } artificial \text{  }  viscosity$ flag inside the $Stabilization parameters$ subsection inside the $Discretization$ subsection in your parameter file.
+
+Starting with the TODO(shell2dsimple) cookbook, a radial compositional field was added to help show the advantages of using the artificial viscosity smoothing feature.
+
+TODO what else was changed? .. compositional field? etc?
+  
+What is difference it makes?
+
+
+By setting parameters like those shown below,
+it is possible to produce many interesting flow fields such as the ones visualized in
+(Figure \ref{fig:smoothing}).
+\lstinputlisting[language=prmfile]{cookbooks/shell_simple_2d_smoothing/shell_simple_2d_smoothing_piece.prm.out}
+
+\begin{figure}
+    \centering
+  \subfigure[]{
+    \includegraphics[width=.48\textwidth]{cookbooks/prescribed_velocity/corner_flow}}
+  ~
+  \subfigure[]{
+    \includegraphics[width=.48\textwidth]{cookbooks/prescribed_velocity/circle}}
+    \caption{Example of the output of two similar runs.  The run on the right has the artificial viscosity smoothing turned on and the run on the left does not, as described in Section \ref{sec:artificial-viscosity-smoothing}.}
+    \label{fig:smoothing}
+\end{figure}
+
 \subsection{Geophysical setups}
 \label{sec:cookbooks-geophysical}
 
