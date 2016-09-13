@@ -202,11 +202,17 @@ namespace aspect
                                                             q);
           const double bulk_density = (1.0 - porosity) * density_s + porosity * density_f;
 
+          bool use_laplace = false;
 
           if (rebuild_stokes_matrix)
             for (unsigned int i=0; i<dofs_per_cell; ++i)
               for (unsigned int j=0; j<dofs_per_cell; ++j)
-                data.local_matrix(i,j) += ( (use_tensor ?
+                data.local_matrix(i,j) += (( use_laplace ?
+                                                (eta
+                                                 * scalar_product( scratch.finite_element_values[introspection.extractors.velocities].gradient(i,q),
+                                                 scratch.finite_element_values[introspection.extractors.velocities].gradient(j,q))
+                                                 )
+                                              : ((use_tensor ?
                                              eta * 2.0 * (scratch.grads_phi_u[i] * stress_strain_director * scratch.grads_phi_u[j])
                                              :
                                              eta * 2.0 * (scratch.grads_phi_u[i] * scratch.grads_phi_u[j]))
@@ -214,7 +220,8 @@ namespace aspect
                                                eta * 2.0/3.0 * (scratch.div_phi_u[i] * trace(stress_strain_director * scratch.grads_phi_u[j]))
                                                :
                                                eta * 2.0/3.0 * (scratch.div_phi_u[i] * scratch.div_phi_u[j])
-                                              )
+                                              ))
+                        )
                                             - (pressure_scaling *
                                                scratch.div_phi_u[i] * scratch.phi_p[j])
                                             // finally the term -div(u). note the negative sign to make this
@@ -226,7 +233,7 @@ namespace aspect
                                              * scratch.phi_p_c[i] * scratch.phi_p_c[j])
                                             - pressure_scaling * scratch.div_phi_u[i] * scratch.phi_p_c[j]
                                             - pressure_scaling * scratch.phi_p_c[i] * scratch.div_phi_u[j]
-                                            - K_D * pressure_scaling * pressure_scaling *
+                        - (K_D) * pressure_scaling * pressure_scaling *
                                             (scratch.grad_phi_p[i] * scratch.grad_phi_p[j])
                                             + (this->get_material_model().is_compressible()
                                                ?
@@ -239,10 +246,14 @@ namespace aspect
           Tensor<1,dim> force_u;
           for (unsigned int d=0; d<dim; ++d)
             force_u[d] = scratch.material_model_outputs.force_vector[q][d];
+          const double force_pf = scratch.material_model_outputs.force_vector[q][dim];
+          const double force_pc = scratch.material_model_outputs.force_vector[q][dim+1];
 
           for (unsigned int i=0; i<dofs_per_cell; ++i)
             data.local_rhs(i) += (
-                                   (bulk_density * gravity * scratch.phi_u[i])
+                                   ((bulk_density * gravity + force_u) * scratch.phi_u[i]
+                                    + (pressure_scaling * force_pf * scratch.phi_p[i])
+                                    + (pressure_scaling * force_pc * scratch.phi_p_c[i]))
                                    +
                                    // add the term that results from the compressibility. compared
                                    // to the manual, this term seems to have the wrong sign, but this
@@ -257,7 +268,7 @@ namespace aspect
                                      scratch.phi_p[i])
                                     :
                                     0)
-                                   + pressure_scaling *
+                                   + 0.0 * pressure_scaling *
                                    p_f_RHS * scratch.phi_p[i]
                                    - pressure_scaling *
                                    K_D * density_f *

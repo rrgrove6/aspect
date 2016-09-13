@@ -121,7 +121,8 @@ namespace aspect
     variables.push_back(
       VariableDeclaration<dim>("velocity",
                                std_cxx11::shared_ptr<FiniteElement<dim> >(
-                                 new FE_Q<dim>(parameters.stokes_velocity_degree)),
+                               new FE_Q<dim>(parameters.stokes_velocity_degree)),
+                  //           new FE_Q<dim>(2)),
                                dim,
                                n_velocity_blocks));
 
@@ -129,7 +130,9 @@ namespace aspect
       VariableDeclaration<dim>(
         "pressure",
         internal::new_FE_Q_or_DGP<dim>(parameters.use_locally_conservative_discretization,
-                                       parameters.stokes_velocity_degree-1),
+                         parameters.stokes_velocity_degree-1),
+                       // 1),
+
         1,
         1));
 
